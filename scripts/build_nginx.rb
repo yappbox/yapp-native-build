@@ -4,8 +4,8 @@ require 'fileutils'
 extend FileUtils
 
 NGINX='nginx-1.8.0'
-HOME=ENV['HOME']
-PREFIX="#{HOME}/#{NGINX}-build"
+PREFIX="#{ENV['HOME']}/#{NGINX}-build"
+BUCKET=ENV['BUILD_BUCKET']
 
 puts 'Download nginx'
 system "wget http://nginx.org/download/#{NGINX}.tar.gz"
@@ -28,8 +28,10 @@ cd NGINX do
   abort 'build failed' unless $?.success?
 end
 
-system "tar cvzf #{NGINX}-build.tar.gz #{PREFIX}/"
-
-s3 = Aws::S3::Resource.new(region:'us-west-2')
-obj = s3.bucket(ENV['BUILD_BUCKET']).object("#{NGINX}-build.tar.gz")
+puts "Upload to #{NGINX}-build.tar.gz S3 #{BUCKET}"
+system "tar cvzf #{NGINX}-build.tar.gz #{NGINX}-build/"
+s3 = Aws::S3::Resource.new
+obj = s3.bucket(BUCKET).object("#{NGINX}-build.tar.gz")
 obj.upload_file("#{NGINX}-build.tar.gz")
+
+puts "done."
